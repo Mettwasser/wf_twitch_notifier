@@ -14,6 +14,7 @@ use chrono::{
     Utc,
 };
 use clap::Parser;
+use regex::Regex;
 use tokio::{
     fs,
     task::JoinSet,
@@ -27,7 +28,6 @@ use twitch_irc::{
         RefreshingLoginCredentials,
         UserAccessToken,
     },
-    message::ServerMessage,
 };
 
 use crate::{
@@ -44,6 +44,8 @@ use crate::{
     },
 };
 
+const INIT_FILE_PATH: &str = "./init.txt";
+
 async fn load_credentials() -> anyhow::Result<ComposedCredentials> {
     let contents = fs::read_to_string(CREDENTIALS_PATH)
         .await
@@ -56,32 +58,43 @@ async fn load_credentials() -> anyhow::Result<ComposedCredentials> {
 #[tokio::main]
 pub async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt()
-        .with_max_level(LevelFilter::DEBUG)
+        .with_max_level(LevelFilter::INFO)
         .init();
 
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Init {
-            id,
-            secret,
-            access_token,
-            refresh_token,
-            expires_at,
-        } => init(id, secret, access_token, refresh_token, expires_at).await?,
+        Commands::Init { id, secret } => init(id, secret).await?,
         Commands::Run { channel_name } => run(channel_name).await?,
     }
 
     Ok(())
 }
 
-async fn init(
-    id: String,
-    secret: String,
-    access_token: String,
-    refresh_token: String,
-    expires_at: DateTime<Utc>,
-) -> anyhow::Result<()> {
+fn parse_datetime_utc(s: &str) -> anyhow::Result<DateTime<Utc>> {
+    let format = "%Y-%m-%d %H:%M:%S%.f %z %Z";
+
+    // 1. Parse the string with its timezone info
+    // 2. On success, convert it to UTC and return
+    Ok(DateTime::parse_from_str(s, format).map(|dt| dt.with_timezone(&Utc))?)
+}
+
+async fn init(id: String, secret: String) -> anyhow::Result<()> {
+    let regex = Regex::new(r"User Access Token:\s+(?<accessToken>\w+)\s*[\r\n]+.*?Refresh Token:\s+(?<refreshToken>\w+)\s*[\r\n]+.*?Expires At:\s+(?<expiresAt>.*)").unwrap();
+
+    let contents = fs::read_to_string(INIT_FILE_PATH)
+        .await
+        .context(format!("Failed to read init file at {INIT_FILE_PATH}"))?;
+
+    let captures = regex
+        .captures(&contents)
+        .context("Failed to parse init file")?;
+
+    let access_token = captures.name("accessToken").unwrap().as_str().to_string();
+    let refresh_token = captures.name("refreshToken").unwrap().as_str().to_string();
+    let expires_at = parse_datetime_utc(captures.name("expiresAt").unwrap().as_str())
+        .context("Failed to parse expires_at")?;
+
     let credentials = ComposedCredentials {
         client_id: id,
         client_secret: secret,
@@ -96,6 +109,10 @@ async fn init(
     let contents = serde_json::to_string_pretty(&credentials)?;
     fs::write("./.credentials.json", contents).await?;
 
+    fs::remove_file(INIT_FILE_PATH)
+        .await
+        .context(format!("Failed to remove init file at {INIT_FILE_PATH}"))?;
+
     Ok(())
 }
 
@@ -108,33 +125,25 @@ async fn run(channel_name: String) -> anyhow::Result<()> {
 
     let wf = warframe::worldstate::Client::new();
 
-    let (mut incoming_msgs, client) = TwitchIRCClient::<
+    let (_, client) = TwitchIRCClient::<
         SecureTCPTransport,
         RefreshingLoginCredentials<SimpleTokenStorage>,
-    >::new(ClientConfig::new_simple(
-        RefreshingLoginCredentials::<SimpleTokenStorage>::init(
-            credentials.client_id.clone(),
-            credentials.client_secret.clone(),
-            SimpleTokenStorage(match tokio::fs::read_to_string(CREDENTIALS_PATH).await {
-                Ok(contents) => {
-                    let token: ComposedCredentials = serde_json::from_str(&contents)?;
-                    token
-                }
-                Err(_) => bail!(
-                    "Failed to read {}. Please use the init command (`wf_twitch_notifier init -h` for more info)",
-                    CREDENTIALS_PATH
-                ),
-            }),
-        ),
-    ));
-
-    tokio::spawn(async move {
-        while let Some(message) = incoming_msgs.recv().await {
-            if let ServerMessage::Privmsg(msg) = message {
-                tracing::debug!(message = ?msg.message_text);
+    >::new(ClientConfig::new_simple(RefreshingLoginCredentials::<
+        SimpleTokenStorage,
+    >::init(
+        credentials.client_id.clone(),
+        credentials.client_secret.clone(),
+        SimpleTokenStorage(match tokio::fs::read_to_string(CREDENTIALS_PATH).await {
+            Ok(contents) => {
+                let token: ComposedCredentials = serde_json::from_str(&contents)?;
+                token
             }
-        }
-    });
+            Err(_) => bail!(
+                "Failed to read {}. Please use the init command (`wf_twitch_notifier init -h` for more info)",
+                CREDENTIALS_PATH
+            ),
+        }),
+    )));
 
     client.join(channel_name.clone()).unwrap();
 

@@ -20,6 +20,7 @@ twitch-irc = { version = "5.0.1", features = ["refreshing-token-native-tls"] }
 warframe = "7.0.1"
 arbitration_data = { git = "https://github.com/Mettwasser/arbitration_data", version = "0.2.1" }
 csv = "1.3.1"
+regex = { version = "1.11.1", features = ["use_std"] }
 
 [lints.clippy]
 uninlined_format_args = "allow"
