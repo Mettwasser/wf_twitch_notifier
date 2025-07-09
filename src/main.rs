@@ -74,12 +74,12 @@ pub async fn main() -> anyhow::Result<()> {
 fn parse_datetime_utc(s: &str) -> anyhow::Result<DateTime<Utc>> {
     let format = "%Y-%m-%d %H:%M:%S%.f %z %Z";
 
-    // 1. Parse the string with its timezone info
-    // 2. On success, convert it to UTC and return
-    Ok(DateTime::parse_from_str(s, format).map(|dt| dt.with_timezone(&Utc))?)
+    Ok(DateTime::parse_from_str(s.trim(), format).map(|dt| dt.with_timezone(&Utc))?)
 }
 
 async fn init(id: String, secret: String) -> anyhow::Result<()> {
+    Config::load()?;
+
     let regex = Regex::new(r"User Access Token:\s+(?<accessToken>\w+)\s*[\r\n]+.*?Refresh Token:\s+(?<refreshToken>\w+)\s*[\r\n]+.*?Expires At:\s+(?<expiresAt>.*)").unwrap();
 
     let contents = fs::read_to_string(INIT_FILE_PATH)
@@ -107,7 +107,7 @@ async fn init(id: String, secret: String) -> anyhow::Result<()> {
     };
 
     let contents = serde_json::to_string_pretty(&credentials)?;
-    fs::write("./.credentials.json", contents).await?;
+    fs::write(CREDENTIALS_PATH, contents).await?;
 
     fs::remove_file(INIT_FILE_PATH)
         .await

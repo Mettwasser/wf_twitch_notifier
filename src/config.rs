@@ -7,20 +7,44 @@ use serde::{
 };
 
 #[derive(Debug, Deserialize, Serialize)]
+pub struct MessageConfig {
+    pub enabled: bool,
+    pub format: String,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Config {
-    pub eidolon_hunt_message: bool,
+    pub eidolon_hunts: MessageConfig,
 
-    pub arbitration_s_tier_message: bool,
+    pub s_tier_arbitrations: MessageConfig,
 
-    pub relic_meta_and_disruption_message: bool,
+    pub meta_relics: MessageConfig,
+
+    pub steel_path_disruption_fissures: MessageConfig,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
-            eidolon_hunt_message: true,
-            arbitration_s_tier_message: true,
-            relic_meta_and_disruption_message: true,
+            eidolon_hunts: MessageConfig {
+                enabled: true,
+                format: "🌙 @{channel_name}, swing yo' ass over to Cetus! It's EIDOLON TIME!"
+                    .to_owned(),
+            },
+            s_tier_arbitrations: MessageConfig {
+                enabled: true,
+                format: "💰 @{channel_name}, new S-Tier Arbitration: {node} on {planet}".to_owned(),
+            },
+            meta_relics: MessageConfig {
+                enabled: true,
+                format: "🔍 @{channel_name} New Meta Fissure detected on {node} - {difficulty}"
+                    .to_owned(),
+            },
+            steel_path_disruption_fissures: MessageConfig {
+                enabled: true,
+                format: "⚡ @{channel_name} New Steel Path Disruption Fissure detected on {node}"
+                    .to_owned(),
+            },
         }
     }
 }
@@ -31,7 +55,7 @@ impl Config {
             Ok(config) => Ok(serde_json::from_str(&config).context("Failed to parse config.json")?),
             Err(_) => {
                 let config = Config::default();
-                fs::write("./config.json", serde_json::to_string(&config)?)?;
+                fs::write("./config.json", serde_json::to_string_pretty(&config)?)?;
 
                 Ok(config)
             }

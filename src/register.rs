@@ -41,20 +41,19 @@ pub fn register_listeners(
 ) -> anyhow::Result<()> {
     let arbi_data = Arc::new(arbi_data);
 
-    if config.eidolon_hunt_message {
+    if config.eidolon_hunts.enabled {
         let channel_name = channel_name.clone();
         let client = client.clone();
         let wf = wf.clone();
+        let fmt = config.eidolon_hunts.format.clone();
+
         join_set.spawn(async move {
             wf.call_on_update::<Cetus, _>(async move |_, cetus| {
                 if cetus.state == CetusState::Night {
                     client
                         .say(
                             channel_name.clone(),
-                            format!(
-                                "🌙🌙🌙 Hey @{}, swing yo' ass over to Cetus! It's EIDOLON TIME!",
-                                channel_name
-                            ),
+                            fmt.replace("{channel_name}", &channel_name),
                         )
                         .await
                         .unwrap();
@@ -65,10 +64,11 @@ pub fn register_listeners(
         });
     }
 
-    if config.arbitration_s_tier_message {
+    if config.s_tier_arbitrations.enabled {
         let channel_name = channel_name.clone();
         let client = client.clone();
         let arbi_data = arbi_data.clone();
+        let fmt = config.s_tier_arbitrations.format.clone();
 
         join_set.spawn(async move {
             while let Ok(next_arbi) = arbi_data.upcoming_by_tier(arbitration_data::Tier::S) {
@@ -80,10 +80,9 @@ pub fn register_listeners(
                 client
                     .say(
                         channel_name.clone(),
-                        format!(
-                            "💰🤑 @{}, new S-Tier Arbitration: {} on {}",
-                            channel_name, next_arbi.node, next_arbi.planet
-                        ),
+                        fmt.replace("{channel_name}", &channel_name)
+                            .replace("{node}", &next_arbi.node)
+                            .replace("{planet}", &next_arbi.planet),
                     )
                     .await?;
             }
@@ -92,47 +91,65 @@ pub fn register_listeners(
         });
     }
 
-    if config.relic_meta_and_disruption_message {
+    if config.meta_relics.enabled {
         let channel_name = channel_name.clone();
         let client = client.clone();
         let wf = wf.clone();
+        let fmt = config.meta_relics.format.clone();
 
         join_set.spawn(async move {
             Ok(wf
                 .call_on_nested_update::<Fissure, _>(async move |fissure, change| {
-                    if change == Change::Added {
-                        if fissure.mission_key == MissionType::Defense {
-                            let node = fissure.node_key.split(' ').collect::<Vec<_>>()[0];
+                    if change == Change::Added && fissure.mission_key == MissionType::Defense {
+                        let node = fissure.node_key.split(' ').collect::<Vec<_>>()[0];
 
-                            match MAP_RANKING.get(node) {
-                                Some(tier)
-                                    if *tier == arbitration_data::Tier::S
-                                        || *tier == arbitration_data::Tier::A =>
-                                {
-                                    client
-                                        .say(
-                                            channel_name.clone(),
-                                            format!(
-                                                "🔍 New {}-Tier Meta Fissure detected: {}{}",
-                                                tier,
-                                                fissure.node,
-                                                if fissure.is_hard { " (STEEL PATH)" } else { "" }
+                        match MAP_RANKING.get(node) {
+                            Some(tier)
+                                if *tier == arbitration_data::Tier::S
+                                    || *tier == arbitration_data::Tier::A =>
+                            {
+                                client
+                                    .say(
+                                        channel_name.clone(),
+                                        fmt.replace("{channel_name}", &channel_name)
+                                            .replace("{node}", &fissure.node)
+                                            .replace(
+                                                "{difficulty}",
+                                                match fissure.is_hard {
+                                                    true => "Steel Path",
+                                                    false => "Normal",
+                                                },
                                             ),
-                                        )
-                                        .await
-                                        .unwrap();
-                                }
-                                _ => (),
+                                    )
+                                    .await
+                                    .unwrap();
                             }
+                            _ => (),
                         }
-                    } else if fissure.mission_key == MissionType::Disruption && fissure.is_hard {
+                    }
+                })
+                .await?)
+        });
+    }
+
+    if config.steel_path_disruption_fissures.enabled {
+        let channel_name = channel_name.clone();
+        let client = client.clone();
+        let wf = wf.clone();
+        let fmt = config.steel_path_disruption_fissures.format.clone();
+
+        join_set.spawn(async move {
+            Ok(wf
+                .call_on_nested_update::<Fissure, _>(async move |fissure, change| {
+                    if change == Change::Added
+                        && fissure.mission_key == MissionType::Disruption
+                        && fissure.is_hard
+                    {
                         client
                             .say(
                                 channel_name.clone(),
-                                format!(
-                                    "⚡ New Steel Path Disruption detected on {}",
-                                    fissure.node
-                                ),
+                                fmt.replace("{channel_name}", &channel_name)
+                                    .replace("{node}", &fissure.node),
                             )
                             .await
                             .unwrap();
