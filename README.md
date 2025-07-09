@@ -55,20 +55,46 @@ You can edit the `config.json` to change the notifier's behavior.
 For example, assuming this is your config: 
 ```json
 {
-    "eidolon_hunt_message": true,
-    "arbitration_s_tier_message": true,
-    "relic_meta_and_disruption_message": true
+  "eidolon_hunts": {
+    "enabled": true,
+    "format": "🌙 @{channel_name}, swing yo' ass over to Cetus! It's EIDOLON TIME!"
+  },
+  "s_tier_arbitrations": {
+    "enabled": true,
+    "format": "💰 @{channel_name}, new S-Tier Arbitration: {node} on {planet}"
+  },
+  "meta_relics": {
+    "enabled": true,
+    "format": "🔍 @{channel_name} New Meta Fissure ({difficulty}) detected on {node}"
+  },
+  "steel_path_disruption_fissures": {
+    "enabled": true,
+    "format": "⚡ @{channel_name} New Steel Path Disruption Fissure detected on {node}"
+  }
 }
 ```
 
-Now, let's also say you're not interested in eidolon hunts. You can disable the eidolon hunt messages by setting the second line to `false`, so `"eidolon_hunt_message": false,`.
+Now, let's also say you're not interested in eidolon hunts. You can disable the eidolon hunt messages by setting the `eidolon_hunts`' `enabled` to `false`.
 
 It would then look like:
 ```json
 {
-    "eidolon_hunt_message": false,
-    "arbitration_s_tier_message": true,
-    "relic_meta_and_disruption_message": true
+  "eidolon_hunts": {
+    "enabled": false,
+    "format": "🌙 @{channel_name}, swing yo' ass over to Cetus! It's EIDOLON TIME!"
+  },
+  "s_tier_arbitrations": {
+    "enabled": true,
+    "format": "💰 @{channel_name}, new S-Tier Arbitration: {node} on {planet}"
+  },
+  "meta_relics": {
+    "enabled": true,
+    "format": "🔍 @{channel_name} New Meta Fissure ({difficulty}) detected on {node}"
+  },
+  "steel_path_disruption_fissures": {
+    "enabled": true,
+    "format": "⚡ @{channel_name} New Steel Path Disruption Fissure detected on {node}"
+  }
 }
 ```
 
@@ -85,6 +111,11 @@ wf_twitch_notifier.exe run <YOUR CHANNEL NAME>
 
 ## Finalizing
 Done. As long as this app runs it'll send notifications when the specified event takes place.
+
+# Placeholders
+The app supports custom messages, that can also be configured in the `config.json`.
+
+For more information on which placeholders you can use, see [Placeholders](placeholders.md).
 
 # Feature requests
 Have any events you want to have added? Open an Issue in this repository and I'll see what I can do.

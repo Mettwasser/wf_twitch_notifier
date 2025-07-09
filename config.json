@@ -1,5 +1,18 @@
 {
-    "eidolon_hunt_message": true,
-    "arbitration_s_tier_message": true,
-    "relic_meta_and_disruption_message": true
+  "eidolon_hunts": {
+    "enabled": true,
+    "format": "🌙 @{channel_name}, swing yo' ass over to Cetus! It's EIDOLON TIME!"
+  },
+  "s_tier_arbitrations": {
+    "enabled": true,
+    "format": "💰 @{channel_name}, new S-Tier Arbitration: {node} on {planet}"
+  },
+  "meta_relics": {
+    "enabled": true,
+    "format": "🔍 @{channel_name} New Meta Fissure ({difficulty}) detected on {node}"
+  },
+  "steel_path_disruption_fissures": {
+    "enabled": true,
+    "format": "⚡ @{channel_name} New Steel Path Disruption Fissure detected on {node}"
+  }
 }
