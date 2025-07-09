@@ -142,6 +142,7 @@ pub fn register_listeners(
             Ok(wf
                 .call_on_nested_update::<Fissure, _>(async move |fissure, change| {
                     if change == Change::Added
+                        && fissure.tier != worldstate::Tier::Requiem
                         && fissure.mission_key == MissionType::Disruption
                         && fissure.is_hard
                     {
