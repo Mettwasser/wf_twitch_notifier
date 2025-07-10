@@ -2,8 +2,13 @@ pub mod arbitrations;
 pub mod cli;
 pub mod config;
 pub mod credentials;
+pub mod listener;
+pub mod placeholder;
 pub mod register;
+pub mod state;
 pub mod token_storage;
+
+use std::sync::Arc;
 
 use anyhow::{
     Context,
@@ -38,6 +43,8 @@ use crate::{
     },
     config::Config,
     credentials::ComposedCredentials,
+    placeholder::ChannelName,
+    state::State,
     token_storage::{
         CREDENTIALS_PATH,
         SimpleTokenStorage,
@@ -155,13 +162,21 @@ async fn run(channel_name: String) -> anyhow::Result<()> {
         .await
         .unwrap();
 
+    // notifier_config,
+    // channel_name.clone(),
+    // client.clone(),
+    // wf,
+    // arbi_data,
     register::register_listeners(
         &mut join_set,
-        notifier_config,
-        channel_name.clone(),
-        client.clone(),
-        wf,
-        arbi_data,
+        State {
+            client: client.clone(),
+            config: Arc::new(notifier_config),
+            credentials: Arc::new(credentials),
+            arbi_data: Arc::new(arbi_data),
+            wf,
+            channel_name: ChannelName::from(channel_name.clone()),
+        },
     )?;
 
     client
