@@ -4,11 +4,7 @@ use std::{
 };
 
 use anyhow::Context;
-use semver::{
-    BuildMetadata,
-    Prerelease,
-    Version,
-};
+use semver::Version;
 use serde::{
     Deserialize,
     Serialize,
