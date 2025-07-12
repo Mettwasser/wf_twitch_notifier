@@ -1,5 +1,6 @@
 pub mod arbitrations;
 pub mod cli;
+pub mod commands;
 pub mod config;
 pub mod credentials;
 pub mod listener;
@@ -34,6 +35,7 @@ use twitch_irc::{
         UserAccessToken,
     },
 };
+use warframe::market;
 
 use crate::{
     arbitrations::load_arbi_data,
@@ -132,25 +134,25 @@ async fn run(channel_name: String) -> anyhow::Result<()> {
 
     let wf = warframe::worldstate::Client::new();
 
-    let (_, client) = TwitchIRCClient::<
+    let (incoming_messages, client) = TwitchIRCClient::<
         SecureTCPTransport,
         RefreshingLoginCredentials<SimpleTokenStorage>,
-    >::new(ClientConfig::new_simple(RefreshingLoginCredentials::<
-        SimpleTokenStorage,
-    >::init(
-        credentials.client_id.clone(),
-        credentials.client_secret.clone(),
-        SimpleTokenStorage(match tokio::fs::read_to_string(CREDENTIALS_PATH).await {
-            Ok(contents) => {
-                let token: ComposedCredentials = serde_json::from_str(&contents)?;
-                token
-            }
-            Err(_) => bail!(
-                "Failed to read {}. Please use the init command (`wf_twitch_notifier init -h` for more info)",
-                CREDENTIALS_PATH
-            ),
-        }),
-    )));
+    >::new(ClientConfig::new_simple(
+        RefreshingLoginCredentials::<SimpleTokenStorage>::init(
+            credentials.client_id.clone(),
+            credentials.client_secret.clone(),
+            SimpleTokenStorage(match tokio::fs::read_to_string(CREDENTIALS_PATH).await {
+                Ok(contents) => {
+                    let token: ComposedCredentials = serde_json::from_str(&contents)?;
+                    token
+                }
+                Err(_) => bail!(
+                    "Failed to read {}. Please use the init command (`wf_twitch_notifier init -h` for more info)",
+                    CREDENTIALS_PATH
+                ),
+            }),
+        ),
+    ));
 
     client.join(channel_name.clone()).unwrap();
 
@@ -162,22 +164,22 @@ async fn run(channel_name: String) -> anyhow::Result<()> {
         .await
         .unwrap();
 
-    // notifier_config,
-    // channel_name.clone(),
-    // client.clone(),
-    // wf,
-    // arbi_data,
-    register::register_listeners(
-        &mut join_set,
-        State {
-            client: client.clone(),
-            config: Arc::new(notifier_config),
-            credentials: Arc::new(credentials),
-            arbi_data: Arc::new(arbi_data),
-            wf,
-            channel_name: ChannelName::from(channel_name.clone()),
-        },
-    )?;
+    let state = State {
+        client: client.clone(),
+        config: Arc::new(notifier_config),
+        credentials: Arc::new(credentials),
+        arbi_data: Arc::new(arbi_data),
+        channel_name: ChannelName::from(channel_name.clone()),
+        wf,
+        wfm: Arc::new(market::Client::new()),
+    };
+
+    register::register_listeners(&mut join_set, state.clone())?;
+
+    tokio::spawn(commands::listen_to_commands(
+        incoming_messages,
+        state.clone(),
+    ));
 
     client
         .say(

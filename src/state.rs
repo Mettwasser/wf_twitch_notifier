@@ -6,7 +6,10 @@ use twitch_irc::{
     TwitchIRCClient,
     login::RefreshingLoginCredentials,
 };
-use warframe::worldstate;
+use warframe::{
+    market,
+    worldstate,
+};
 
 use crate::{
     config::Config,
@@ -21,6 +24,7 @@ pub struct State {
     pub config: Arc<Config>,
     pub credentials: Arc<ComposedCredentials>,
     pub arbi_data: Arc<ArbitrationData>,
-    pub wf: worldstate::Client,
     pub channel_name: ChannelName,
+    pub wf: worldstate::Client,
+    pub wfm: Arc<market::Client>,
 }
