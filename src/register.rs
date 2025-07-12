@@ -15,33 +15,33 @@ pub fn register_listeners(
     join_set: &mut JoinSet<Result<(), anyhow::Error>>,
     state: state::State,
 ) -> anyhow::Result<()> {
-    let config = state.config.clone();
+    let message_config = &state.config.clone().message_config;
 
-    if config.eidolon_hunts.enabled {
+    if message_config.eidolon_hunts.enabled {
         join_set.spawn(EidolonHuntListener::run(
             state.clone(),
-            config.eidolon_hunts.format.clone(),
+            message_config.eidolon_hunts.format.clone(),
         ));
     }
 
-    if config.s_tier_arbitrations.enabled {
+    if message_config.s_tier_arbitrations.enabled {
         join_set.spawn(STierArbitrationListener::run(
             state.clone(),
-            config.s_tier_arbitrations.format.clone(),
+            message_config.s_tier_arbitrations.format.clone(),
         ));
     }
 
-    if config.meta_relics.enabled {
+    if message_config.meta_relics.enabled {
         join_set.spawn(MetaRelicsListener::run(
             state.clone(),
-            config.meta_relics.format.clone(),
+            message_config.meta_relics.format.clone(),
         ));
     }
 
-    if config.steel_path_disruption_fissures.enabled {
+    if message_config.steel_path_disruption_fissures.enabled {
         join_set.spawn(SteelPathDisruptionFissuresListener::run(
             state.clone(),
-            config.steel_path_disruption_fissures.format.clone(),
+            message_config.steel_path_disruption_fissures.format.clone(),
         ));
     }
 

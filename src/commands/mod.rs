@@ -8,6 +8,7 @@ use twitch_irc::message::ServerMessage;
 
 use crate::{
     commands::average::Average,
+    config::CommandConfig,
     state::State,
 };
 
@@ -39,7 +40,7 @@ pub async fn listen_to_commands(
     mut incoming_messages: UnboundedReceiver<ServerMessage>,
     state: State,
 ) -> anyhow::Result<()> {
-    let commands = vec![Box::new(Average) as Box<dyn Command>];
+    let commands = get_command_list(&state.config.command_config);
 
     let command_map = create_command_map(commands);
 
@@ -91,6 +92,20 @@ pub async fn listen_to_commands(
     }
 
     Ok(())
+}
+
+fn add_command_if(cond: bool, list: &mut Vec<Box<dyn Command>>, command: impl Command + 'static) {
+    if cond {
+        list.push(Box::new(command) as Box<dyn Command>);
+    }
+}
+
+fn get_command_list(config: &CommandConfig) -> Vec<Box<dyn Command>> {
+    let mut commands = Vec::new();
+
+    add_command_if(config.average_command.enabled, &mut commands, Average);
+
+    commands
 }
 
 fn create_command_map(commands: Vec<Box<dyn Command>>) -> HashMap<&'static str, Box<dyn Command>> {

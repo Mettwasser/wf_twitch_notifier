@@ -176,7 +176,7 @@ async fn run(channel_name: String) -> anyhow::Result<()> {
 
     register::register_listeners(&mut join_set, state.clone())?;
 
-    tokio::spawn(commands::listen_to_commands(
+    join_set.spawn(commands::listen_to_commands(
         incoming_messages,
         state.clone(),
     ));
