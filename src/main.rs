@@ -5,7 +5,6 @@ pub mod config;
 pub mod credentials;
 pub mod listener;
 pub mod placeholder;
-pub mod register;
 pub mod state;
 pub mod token_storage;
 
@@ -174,7 +173,7 @@ async fn run(channel_name: String) -> anyhow::Result<()> {
         wfm: Arc::new(market::Client::new()),
     };
 
-    register::register_listeners(&mut join_set, state.clone())?;
+    listener::register_listeners(&mut join_set, state.clone())?;
 
     join_set.spawn(commands::listen_to_commands(
         incoming_messages,

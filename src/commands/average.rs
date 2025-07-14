@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use anyhow::Context;
 use async_trait::async_trait;
-use textdistance::nstr::ratcliff_obershelp;
+use textdistance::nstr::jaro_winkler;
 use warframe::market::{
     ItemShort,
     Language,
@@ -21,8 +21,7 @@ fn find_best_match(query: &str, candidates: Arc<[ItemShort]>) -> Option<(String,
     candidates
         .iter()
         .max_by_key(|&candidate| {
-            (ratcliff_obershelp(query, &candidate.i18n.get(&Language::En).unwrap().name) * 1000.0)
-                as i32
+            (jaro_winkler(query, &candidate.i18n.get(&Language::En).unwrap().name) * 1000.0) as i32
         })
         .map(|s| {
             (

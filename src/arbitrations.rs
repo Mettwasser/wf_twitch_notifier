@@ -1,4 +1,7 @@
-use arbitration_data::model::{dict::LanguageDict, regions::ExportRegions};
+use arbitration_data::model::{
+    dict::LanguageDict,
+    regions::ExportRegions,
+};
 
 pub fn load_arbi_data() -> anyhow::Result<arbitration_data::ArbitrationData> {
     let arbi_time_node_mapping = csv::Reader::from_reader(include_str!("../arbys.csv").as_bytes());

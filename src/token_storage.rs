@@ -1,7 +1,9 @@
-use {
-    crate::credentials::ComposedCredentials,
-    twitch_irc::login::{TokenStorage, UserAccessToken},
+use twitch_irc::login::{
+    TokenStorage,
+    UserAccessToken,
 };
+
+use crate::credentials::ComposedCredentials;
 
 pub const CREDENTIALS_PATH: &str = "./.credentials.json";
 
