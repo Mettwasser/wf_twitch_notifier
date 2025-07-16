@@ -17,11 +17,11 @@ use crate::{
     state::State,
 };
 
-fn find_best_match(query: &str, candidates: Arc<[ItemShort]>) -> Option<(String, String)> {
+fn find_best_match(query: String, candidates: Arc<[ItemShort]>) -> Option<(String, String)> {
     candidates
         .iter()
         .max_by_key(|&candidate| {
-            (jaro_winkler(query, &candidate.i18n.get(&Language::En).unwrap().name) * 1000.0) as i32
+            (jaro_winkler(&query, &candidate.i18n.get(&Language::En).unwrap().name) * 1000.0) as i32
         })
         .map(|s| {
             (
@@ -52,7 +52,11 @@ impl Command for Average {
             .await
             .context("Failed to fetch items")?;
 
-        let Some((corrected_item_slug, name)) = find_best_match(&queried_item, items) else {
+        let Some((corrected_item_slug, name)) =
+            tokio::task::spawn_blocking(move || find_best_match(queried_item.to_owned(), items))
+                .await
+                .map_err(|e| CommandError::Server(e.into()))?
+        else {
             return Err(CommandError::Client(
                 "Couldn't find the item you're looking for!".to_owned(),
             ));
