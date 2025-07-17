@@ -4,80 +4,26 @@ use std::{
 };
 
 use anyhow::Context;
+use better_default::Default;
 use semver::Version;
 use serde::{
     Deserialize,
     Serialize,
 };
 
+use crate::{
+    commands::config::CommandConfig,
+    listener::config::ListenerConfig,
+};
+
 pub const CONFIG_PATH: &str = "./config.json";
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq, Default)]
 pub struct Config {
+    #[default(Version::from_str(env!("CARGO_PKG_VERSION")).unwrap())]
     pub version: Version,
-    pub message_config: MessageConfig,
+    pub listener_config: ListenerConfig,
     pub command_config: CommandConfig,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
-pub struct MessageConfigOptions {
-    pub enabled: bool,
-    pub format: String,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
-pub struct MessageConfig {
-    pub eidolon_hunts: MessageConfigOptions,
-
-    pub s_tier_arbitrations: MessageConfigOptions,
-
-    pub meta_relics: MessageConfigOptions,
-
-    pub steel_path_disruption_fissures: MessageConfigOptions,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
-pub struct CommandConfigOptions {
-    pub enabled: bool,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
-pub struct CommandConfig {
-    pub average_command: CommandConfigOptions,
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            version: Version::from_str(env!("CARGO_PKG_VERSION")).unwrap(),
-            message_config: MessageConfig {
-                eidolon_hunts: MessageConfigOptions {
-                    enabled: true,
-                    format: "🌙 @{channel_name}, swing yo' ass over to Cetus! It's EIDOLON TIME!"
-                        .to_owned(),
-                },
-                s_tier_arbitrations: MessageConfigOptions {
-                    enabled: true,
-                    format: "💰 @{channel_name}, new S-Tier Arbitration: {node} on {planet}"
-                        .to_owned(),
-                },
-                meta_relics: MessageConfigOptions {
-                    enabled: true,
-                    format: "🔍 @{channel_name} New Meta Fissure detected on {node} - {difficulty}"
-                        .to_owned(),
-                },
-                steel_path_disruption_fissures: MessageConfigOptions {
-                    enabled: true,
-                    format:
-                        "⚡ @{channel_name} New Steel Path Disruption Fissure detected on {node}"
-                            .to_owned(),
-                },
-            },
-            command_config: CommandConfig {
-                average_command: CommandConfigOptions { enabled: true },
-            },
-        }
-    }
 }
 
 impl Config {

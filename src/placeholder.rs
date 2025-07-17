@@ -54,39 +54,3 @@ impl Display for ChannelName {
         write!(f, "{}", self.0)
     }
 }
-
-pub struct Node<'a>(pub &'a str);
-
-impl<'a> Placeholder for Node<'a> {
-    fn key(&self) -> &'static str {
-        "{node}"
-    }
-
-    fn value(&self) -> &'a str {
-        self.0
-    }
-}
-
-pub struct Planet<'a>(pub &'a str);
-
-impl<'a> Placeholder for Planet<'a> {
-    fn key(&self) -> &'static str {
-        "{planet}"
-    }
-
-    fn value(&self) -> &'a str {
-        self.0
-    }
-}
-
-pub struct Difficulty(pub bool);
-
-impl Placeholder for Difficulty {
-    fn key(&self) -> &'static str {
-        "{difficulty}"
-    }
-
-    fn value(&self) -> &str {
-        if self.0 { "Steel Path" } else { "Normal" }
-    }
-}

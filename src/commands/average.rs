@@ -13,7 +13,11 @@ use crate::{
         ArgumentLength,
         Command,
         CommandError,
+        placeholders::{
+            self,
+        },
     },
+    placeholder::Placeholder,
     state::State,
 };
 
@@ -40,7 +44,7 @@ impl Command for Average {
     }
 
     fn length(&self) -> ArgumentLength {
-        ArgumentLength::Flexible
+        ArgumentLength::Variadic
     }
 
     async fn invoke(&self, state: State, author: &str, args: &[&str]) -> Result<(), CommandError> {
@@ -75,15 +79,16 @@ impl Command for Average {
         let moving_average = &item["payload"]["statistics_closed"]["48hours"][0]["moving_avg"];
 
         state
-            .client
-            .say(
-                state.channel_name.to_string(),
-                format!(
-                    r#"@{author} "{name}" average: {average} || moving average: {moving_average}"#
-                ),
+            .send_command_response(
+                &state.config.command_config.average_command.format,
+                author,
+                [
+                    &placeholders::Average(average.to_string()) as &dyn Placeholder,
+                    &placeholders::MovingAverage(moving_average.to_string()) as &dyn Placeholder,
+                    &placeholders::ItemName(&name),
+                ],
             )
-            .await
-            .map_err(anyhow::Error::from)?;
+            .await?;
 
         Ok(())
     }

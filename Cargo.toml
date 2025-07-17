@@ -1,6 +1,6 @@
 [package]
 name = "wf_twitch_notifier"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 rust-version = "1.88.0"
 authors = ["Mettwasser"]
@@ -24,6 +24,7 @@ regex = { version = "1.11.1", features = ["use_std"] }
 thiserror = "2.0.12"
 textdistance = "1.1.1"
 semver = { version = "1.0.26", features = ["serde"] }
+better_default = "1.0.5"
 
 [lints.clippy]
 uninlined_format_args = "allow"
