@@ -30,3 +30,9 @@ Empty
 - `average`: The item's average price
 - `moving_average`: The item's moving average price
 - `item_name`: The queried item's CORRECTED name
+- `amount_sold`: The amount of sold items in the last 48hrs
+
+#### Filters
+Filters can be applied via `||` as separator. For example: `!avg primed pressure p || r10`
+
+- `r<number>`: filter by mod rank, if present on an item
