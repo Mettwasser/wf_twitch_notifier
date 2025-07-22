@@ -37,6 +37,18 @@ impl Placeholder for MovingAverage {
     }
 }
 
+pub struct AmountSold(pub String);
+
+impl Placeholder for AmountSold {
+    fn key(&self) -> &'static str {
+        "{amount_sold}"
+    }
+
+    fn value(&self) -> &str {
+        self.0.as_ref()
+    }
+}
+
 pub struct ItemName<'a>(pub &'a str);
 
 impl Placeholder for ItemName<'_> {

@@ -22,6 +22,6 @@ impl From<&str> for CommandConfigOptions {
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq, Default)]
 pub struct CommandConfig {
-    #[default(r#"@{author} "{item_name}" average: {average} || moving average: {moving_average}"#.into())]
+    #[default(r#"@{author} "{item_name}" average: {average}p - moving average: {moving_average}p | {amount_sold} sold in the last 48h"#.into())]
     pub average_command: CommandConfigOptions,
 }
