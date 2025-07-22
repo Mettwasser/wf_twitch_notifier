@@ -166,6 +166,7 @@ impl Command for Average {
                 if has_mod_rank {
                     statistics
                         .into_iter()
+                        .rev()
                         .filter(|stat| stat.mod_rank.unwrap() == 0)
                         .collect::<Vec<_>>()
                 } else {
@@ -184,7 +185,11 @@ impl Command for Average {
                 author,
                 [
                     &placeholders::Average(average.to_string()) as &dyn Placeholder,
-                    &placeholders::MovingAverage(moving_average.to_string()) as &dyn Placeholder,
+                    &placeholders::MovingAverage(
+                        moving_average
+                            .map(|avg| avg.to_string())
+                            .unwrap_or_else(|| "unknown".to_owned()),
+                    ) as &dyn Placeholder,
                     &placeholders::ItemName(&name),
                     &placeholders::AmountSold(amount_sold.to_string()),
                 ],
@@ -226,7 +231,7 @@ pub struct Statistic {
 
     pub avg_price: f64,
 
-    pub moving_avg: f64,
+    pub moving_avg: Option<f64>,
 
     pub mod_rank: Option<u8>,
 }
